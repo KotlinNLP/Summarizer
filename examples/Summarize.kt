@@ -145,13 +145,52 @@ private class SummaryHelper(parsedArgs: CommandLineArguments) {
 
     val timer = Timer()
 
+    val tkSentences: List<TkSentence> = this.tokenize(text)
+    val parsedSentences: List<MorphoSynSentence> = this.parse(tkSentences)
+
+    println("Elapsed time: ${timer.formatElapsedTime()}")
+    timer.reset()
+
+    println("Summarizing...")
+    val salienceScores: List<Double> = Summarizer.getSalienceScores(parsedSentences)
+
+    println("Elapsed time: ${timer.formatElapsedTime()}")
+
+    return tkSentences.zip(salienceScores)
+  }
+
+  /**
+   * Tokenize a text.
+   *
+   * @param text a text
+   *
+   * @return the list of tokenized sentences
+   */
+  private fun tokenize(text: String): List<TkSentence> {
+
     println("Tokenizing sentences...")
+
     val tkSentences: List<TkSentence> = this.tokenizer.tokenize(text).filter { it.tokens.isNotEmpty() }
+
     println("${tkSentences.size} non-empty sentences found.")
 
+    return tkSentences
+  }
+
+  /**
+   * Parse a list of sentences.
+   *
+   * @param tkSentences a list of tokenized sentences
+   *
+   * @return the sentences parsed
+   */
+  private fun parse(tkSentences: List<TkSentence>): List<MorphoSynSentence> {
+
     println("Parsing sentences...")
+
     val progress = ProgressIndicatorBar(tkSentences.size)
-    val parsedSentences: List<MorphoSynSentence> = tkSentences.map { sentence ->
+
+    return tkSentences.map { sentence ->
 
       @Suppress("UNCHECKED_CAST")
       val parsingSentence = ParsingSentence(
@@ -167,15 +206,5 @@ private class SummaryHelper(parsedArgs: CommandLineArguments) {
 
       this.parser.parse(parsingSentence)
     }
-
-    println("Elapsed time: ${timer.formatElapsedTime()}")
-    timer.reset()
-
-    println("Summarizing...")
-    val salienceScores: List<Double> = Summarizer.getSalienceScores(parsedSentences)
-
-    println("Elapsed time: ${timer.formatElapsedTime()}")
-
-    return tkSentences.zip(salienceScores)
   }
 }
