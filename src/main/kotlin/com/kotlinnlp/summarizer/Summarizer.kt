@@ -63,9 +63,8 @@ object Summarizer {
     while (s[++relevantSingularValues] >= singularValuesThreshold);
 
     val rowScores: List<Double> = (0 until v.rows).map { k ->
-      (0 .. relevantSingularValues).sumByDouble { i ->
-        Math.pow(v[k, i], 2.0) * Math.pow(s[i], 2.0)
-      }
+      val sqrScore = (0 .. relevantSingularValues).sumByDouble { i -> Math.pow(v[k, i], 2.0) * Math.pow(s[i], 2.0) }
+      Math.sqrt(sqrScore)
     }
     val maxRowScore: Double = rowScores.max()!!
 
