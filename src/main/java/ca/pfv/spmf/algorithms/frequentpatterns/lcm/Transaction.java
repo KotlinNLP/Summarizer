@@ -24,7 +24,10 @@ import java.util.List;
  * @author Alan Souza <apsouza@inf.ufrgs.br>
  */
 public class Transaction {
-	public static Integer[] temp = new Integer[500];
+
+	private static final int MAX_FREQUENT_ITEMS = 2000;
+
+	public static Integer[] temp = new Integer[MAX_FREQUENT_ITEMS];
 
 	Transaction originalTransaction;
 	int offset;
@@ -111,7 +114,7 @@ public class Transaction {
     	// copy only the frequent itemsets after the offset in the temporary buffer
     	int i = 0;
     	for(Integer item : items) {
-    		if(buckets[item].size() >= minsupRelative) {
+    		if(i < MAX_FREQUENT_ITEMS && buckets[item].size() >= minsupRelative) {
     			temp[i++] = item;
     		}
     	}
