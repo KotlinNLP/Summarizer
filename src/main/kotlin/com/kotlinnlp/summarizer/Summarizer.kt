@@ -79,7 +79,7 @@ object Summarizer {
   private fun extractLemmas(sentence: MorphoSynSentence): List<String> =
     sentence.tokens
       .asSequence()
-      .map { it.flatMorphologies.first() }
+      .mapNotNull { it.flatMorphologies.firstOrNull() }
       .filter { it is ContentWord }
       .map { it.lemma }
       .toList()
