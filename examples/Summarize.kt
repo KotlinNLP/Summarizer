@@ -113,7 +113,7 @@ private fun printSummary(tkSentences: List<TkSentence>, summary: Summary, summar
   val summarizedText: String = tkSentences.zip(summary.salienceScores)
     .asSequence()
     .filter { it.second >= summaryStrength }
-    .map { it.first }
+    .map { it.first.buildText() }
     .joinToString("\n------------------------------------------\n")
 
   println()
