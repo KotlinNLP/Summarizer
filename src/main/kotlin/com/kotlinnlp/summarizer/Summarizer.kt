@@ -228,7 +228,7 @@ class Summarizer(private val sentences: List<MorphoSynSentence>, private val ign
   }
 
   /**
-   *
+   * @return the textual representation of this itemset
    */
   private fun Itemset.toText(): String = this.items.joinToString(", ") { item ->
 
