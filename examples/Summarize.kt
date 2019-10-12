@@ -47,13 +47,17 @@ fun main(args: Array<String>) = mainBody {
     } else {
 
       val inputText: String = File(filePath).readText()
+      val (tkSentences, summary) = helper.summarize(inputText)
 
-      val summarizedSentences: List<Pair<TkSentence, Double>> = helper.summarize(inputText)
-      val scoredSentences: List<Pair<String, Double>> = summarizedSentences.map { it.first.buildText() to it.second }
+      printItemsets(summary)
 
       while (true) {
+
         println()
-        readSummaryStrength()?.also { printSummary(scoredSentences = scoredSentences, summaryStrength = it) } ?: break
+
+        readSummaryStrength()?.also {
+          printSummary(tkSentences = tkSentences, summary = summary, summaryStrength = it)
+        } ?: break
       }
     }
   }
@@ -86,14 +90,27 @@ private fun readSummaryStrength(): Double? {
 }
 
 /**
+ * Print the frequent itemsets of a summary.
+ *
+ * @param summary the summary information
+ */
+private fun printItemsets(summary: Summary) {
+
+  println()
+  println("Relevant itemsets:")
+  println(summary.relevantItemsets.joinToString("\n") { "[%.1f] ${it.text}".format(100.0 * it.score) })
+}
+
+/**
  * Print a summary of the sentences with a given strength.
  *
- * @param scoredSentences the list of sentences with the related salience score
+ * @param tkSentences the list of tokenized sentences
+ * @param summary the summary information
  * @param summaryStrength the percentage of summary (0 means no summary) based on which
  */
-private fun printSummary(scoredSentences: List<Pair<String, Double>>, summaryStrength: Double) {
+private fun printSummary(tkSentences: List<TkSentence>, summary: Summary, summaryStrength: Double) {
 
-  val summary: String = scoredSentences
+  val summarizedText: String = tkSentences.zip(summary.salienceScores)
     .asSequence()
     .filter { it.second >= summaryStrength }
     .map { it.first }
@@ -101,7 +118,7 @@ private fun printSummary(scoredSentences: List<Pair<String, Double>>, summaryStr
 
   println()
   println("Summary:")
-  println(summary)
+  println(summarizedText)
 }
 
 /**
@@ -136,13 +153,13 @@ private class SummaryHelper(parsedArgs: CommandLineArguments) {
   })
 
   /**
-   * Summarize a text associating a salience score to each sentence that compose it.
+   * Summarize a text.
    *
    * @param text a text
    *
-   * @return a list of sentences associated to the related salience score
+   * @return the list of tokenized sentences and the related summary
    */
-  fun summarize(text: String): List<Pair<TkSentence, Double>> {
+  fun summarize(text: String): Pair<List<TkSentence>, Summary> {
 
     val timer = Timer()
 
@@ -157,7 +174,7 @@ private class SummaryHelper(parsedArgs: CommandLineArguments) {
 
     println("Elapsed time: ${timer.formatElapsedTime()}")
 
-    return tkSentences.zip(summary.salienceScores)
+    return tkSentences to summary
   }
 
   /**
