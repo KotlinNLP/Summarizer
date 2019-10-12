@@ -57,18 +57,54 @@ object Summarizer {
     val itemsetsMatrix: DenseNDArray = this.buildItemsetsMatrix(sentencesOfLemmas)
     val (_, s, v) = itemsetsMatrix.sparseSVD()
 
-    // Note: singular values in S are sorted by descending value.
-    val singularValuesThreshold: Double = s[0] / 2
-    var relevantSingularValues = -1
-    while (relevantSingularValues < s.lastIndex && s[++relevantSingularValues] >= singularValuesThreshold);
+    val relevantSingularValues: Int = this.calcRelevantSingularValues(s)
 
-    val rowScores: List<Double> = (0 until v.rows).map { k ->
-      val sqrScore = (0 .. relevantSingularValues).sumByDouble { i -> Math.pow(v[k, i], 2.0) * Math.pow(s[i], 2.0) }
+    return this.calcRelevanceScores(s = s, m = v, relevantSingularValues = relevantSingularValues)
+  }
+
+  /**
+   * Calculate the relevance scores respect to an SVD singular matrix.
+   *
+   * @param s the S matrix of the itemset matrix SVD
+   * @param m a singular matrix of the itemset matrix SVD (either U or V)
+   * @param relevantSingularValues how many singular values use for the calculation
+   *
+   * @return the relevance scores of the rows of the given singular matrix
+   */
+  private fun calcRelevanceScores(s: DenseNDArray, m: DenseNDArray, relevantSingularValues: Int): List<Double> {
+
+    val rowScores: List<Double> = (0 until m.rows).map { k ->
+
+      val sqrScore = (0 .. relevantSingularValues).sumByDouble { i ->
+
+        val mKI: Double = m[k, i]
+        val sI: Double = s[i]
+
+        mKI * mKI * sI * sI
+      }
+
       Math.sqrt(sqrScore)
     }
+
     val maxRowScore: Double = rowScores.max()!!
 
     return rowScores.map { it / maxRowScore }
+  }
+
+  /**
+   * @param s the S matrix of the itemset matrix SVD
+   *
+   * @return the number of relevant singular values
+   */
+  private fun calcRelevantSingularValues(s: DenseNDArray): Int {
+
+    val singularValuesThreshold: Double = s[0] / 2
+    var relevantSingularValues = -1
+
+    // Note: singular values in S are sorted by descending value.
+    while (relevantSingularValues < s.lastIndex && s[++relevantSingularValues] >= singularValuesThreshold);
+
+    return relevantSingularValues
   }
 
   /**
