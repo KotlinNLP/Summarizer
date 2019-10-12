@@ -45,21 +45,42 @@ object Summarizer {
   private const val MAX_NGRAM_SIZE = 4
 
   /**
+   * The dictionary of relevant lemmas of the input text.
+   */
+  private lateinit var lemmasDictionary: DictionarySet<String>
+
+  /**
+   * The dictionary of ngrams (as sequence of relevant lemmas) of the input text.
+   */
+  private lateinit var ngramsDictionary: DictionarySet<List<Int>>
+
+  /**
+   * The frequent itemsets found in the input text.
+   */
+  private lateinit var frequentItemsets: List<Itemset>
+
+  /**
    * @param sentences a list of sentences that compose a text
    *
-   * @return the salience scores of the input sentences
+   * @return the summary of the given text
    */
-  fun getSalienceScores(sentences: List<MorphoSynSentence>): List<Double> {
+  fun getSummary(sentences: List<MorphoSynSentence>): Summary {
 
     require(sentences.isNotEmpty())
 
     val sentencesOfLemmas: List<List<String>> = sentences.map { this.extractLemmas(it) }
     val itemsetsMatrix: DenseNDArray = this.buildItemsetsMatrix(sentencesOfLemmas)
-    val (_, s, v) = itemsetsMatrix.sparseSVD()
+    val (u, s, v) = itemsetsMatrix.sparseSVD()
 
     val relevantSingularValues: Int = this.calcRelevantSingularValues(s)
+    val itemsetsRelevance: List<Double> =
+      this.calcRelevanceScores(s = s, m = u, relevantSingularValues = relevantSingularValues)
 
-    return this.calcRelevanceScores(s = s, m = v, relevantSingularValues = relevantSingularValues)
+    return Summary(
+      salienceScores = this.calcRelevanceScores(s = s, m = v, relevantSingularValues = relevantSingularValues),
+      relevantItemsets = this.frequentItemsets.zip(itemsetsRelevance)
+        .map { (itemset, relevance) -> Summary.Itemset(text = itemset.toText(), score = relevance) }
+    )
   }
 
   /**
@@ -130,11 +151,12 @@ object Summarizer {
     val sentencesOfInt: List<IntArray> = this.sentencesToItems(sentencesOfLemmas)
 
     val dataset = Dataset(sentencesOfInt.filter { it.isNotEmpty() })
-    val frequentItemsets: List<Itemset> = AlgoLCM().runAlgorithm(MIN_LCM_SUPPORT, dataset, null).levels.flatten()
-    val itemsetsMatrix = DenseNDArrayFactory.zeros(Shape(frequentItemsets.size, sentencesOfInt.size))
+    this.frequentItemsets = AlgoLCM().runAlgorithm(MIN_LCM_SUPPORT, dataset, null).levels.flatten()
+
+    val itemsetsMatrix = DenseNDArrayFactory.zeros(Shape(this.frequentItemsets.size, sentencesOfInt.size))
 
     sentencesOfInt.forEachIndexed { j, items ->
-      frequentItemsets.forEachIndexed { i, itemset ->
+      this.frequentItemsets.forEachIndexed { i, itemset ->
         if (items.contains(itemset)) itemsetsMatrix[i, j] = 1.0
       }
     }
@@ -152,8 +174,8 @@ object Summarizer {
    */
   private fun sentencesToItems(sentencesOfLemmas: List<List<String>>): List<IntArray> {
 
-    val lemmasDictionary = DictionarySet<String>()
-    val ngramsDictionary = DictionarySet<List<Int>>()
+    this.lemmasDictionary = DictionarySet()
+    this.ngramsDictionary = DictionarySet()
 
     return sentencesOfLemmas.map { sentence ->
 
@@ -193,5 +215,16 @@ object Summarizer {
     val endIndex: Int = min(startIndex + itemset.size() - 1, this.lastIndex)
 
     return this.sliceArray(startIndex .. endIndex).contentEquals(itemset.items)
+  }
+
+  /**
+   *
+   */
+  private fun Itemset.toText(): String = this.items.joinToString(", ") { item ->
+
+    val ngram: List<Int> = this@Summarizer.ngramsDictionary.getElement(item)!!
+    val lemmas: List<String> = ngram.map { this@Summarizer.lemmasDictionary.getElement(it)!! }
+
+    lemmas.joinToString(" ")
   }
 }
