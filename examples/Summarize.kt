@@ -19,6 +19,7 @@ import com.kotlinnlp.neuraltokenizer.Sentence as TkSentence
 import com.kotlinnlp.neuraltokenizer.NeuralTokenizer
 import com.kotlinnlp.neuraltokenizer.NeuralTokenizerModel
 import com.kotlinnlp.summarizer.Summarizer
+import com.kotlinnlp.summarizer.Summary
 import com.kotlinnlp.utils.Timer
 import com.kotlinnlp.utils.progressindicator.ProgressIndicatorBar
 import com.xenomachina.argparser.mainBody
@@ -152,11 +153,11 @@ private class SummaryHelper(parsedArgs: CommandLineArguments) {
     timer.reset()
 
     println("Summarizing...")
-    val salienceScores: List<Double> = Summarizer.getSalienceScores(parsedSentences)
+    val summary: Summary = Summarizer.getSummary(parsedSentences)
 
     println("Elapsed time: ${timer.formatElapsedTime()}")
 
-    return tkSentences.zip(salienceScores)
+    return tkSentences.zip(summary.salienceScores)
   }
 
   /**
