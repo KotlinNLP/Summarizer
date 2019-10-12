@@ -19,30 +19,36 @@ import com.kotlinnlp.utils.DictionarySet
 import kotlin.math.min
 
 /**
- * Helper that calculates the salience scores of sentences that compose a text, with the purpose to build a summary.
+ * Calculate the salience scores and the relevant itemsets of the sentences that compose a text, with the purpose to
+ * build a summary.
  *
  * The algorithm is based on the LSA-itemset summarizer described in:
  *   [Generazione automatica di riassunti di collezioni di documenti multilingua](http://webthesis.biblio.polito.it/id/eprint/6457)
  * that uses the LCM algorithm to extract the frequent itemsets, described in:
  *   [LCM ver. 2: Efficient Mining Algorithms for Frequent/Closed/Maximal Itemsets](http://ceur-ws.org/Vol-126/uno.pdf)
+ *
+ * @param sentences a list of sentences that compose a text
  */
-object Summarizer {
+class Summarizer(private val sentences: List<MorphoSynSentence>) {
 
-  /**
-   * The parameter given to the LCM as minimum support value (in percentage respect to the number of frequent itemsets
-   * collected in the whole text).
-   */
-  private const val MIN_LCM_SUPPORT = 0.01
+  companion object {
 
-  /**
-   * The minimum number of lemmas that compose an ngram.
-   */
-  private const val MIN_NGRAM_SIZE = 2
+    /**
+     * The parameter given to the LCM as minimum support value (in percentage respect to the number of frequent itemsets
+     * collected in the whole text).
+     */
+    private const val MIN_LCM_SUPPORT = 0.01
 
-  /**
-   * The maximum number of lemmas that compose an ngram.
-   */
-  private const val MAX_NGRAM_SIZE = 4
+    /**
+     * The minimum number of lemmas that compose an ngram.
+     */
+    private const val MIN_NGRAM_SIZE = 2
+
+    /**
+     * The maximum number of lemmas that compose an ngram.
+     */
+    private const val MAX_NGRAM_SIZE = 4
+  }
 
   /**
    * The dictionary of relevant lemmas of the input text.
@@ -60,15 +66,18 @@ object Summarizer {
   private lateinit var frequentItemsets: List<Itemset>
 
   /**
-   * @param sentences a list of sentences that compose a text
-   *
-   * @return the summary of the given text
+   * Check requirements.
    */
-  fun getSummary(sentences: List<MorphoSynSentence>): Summary {
+  init {
+    require(this.sentences.isNotEmpty())
+  }
 
-    require(sentences.isNotEmpty())
+  /**
+   * @return the summary of the input text
+   */
+  fun getSummary(): Summary {
 
-    val sentencesOfLemmas: List<List<String>> = sentences.map { this.extractLemmas(it) }
+    val sentencesOfLemmas: List<List<String>> = this.sentences.map { this.extractLemmas(it) }
     val itemsetsMatrix: DenseNDArray = this.buildItemsetsMatrix(sentencesOfLemmas)
     val (u, s, v) = itemsetsMatrix.sparseSVD()
 
