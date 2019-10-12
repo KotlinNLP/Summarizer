@@ -153,7 +153,7 @@ private class SummaryHelper(parsedArgs: CommandLineArguments) {
     timer.reset()
 
     println("Summarizing...")
-    val summary: Summary = Summarizer.getSummary(parsedSentences)
+    val summary: Summary = Summarizer(parsedSentences).getSummary()
 
     println("Elapsed time: ${timer.formatElapsedTime()}")
 
