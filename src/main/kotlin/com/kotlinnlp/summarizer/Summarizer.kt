@@ -28,8 +28,9 @@ import kotlin.math.min
  *   [LCM ver. 2: Efficient Mining Algorithms for Frequent/Closed/Maximal Itemsets](http://ceur-ws.org/Vol-126/uno.pdf)
  *
  * @param sentences a list of sentences that compose a text
+ * @param ignoreLemmas a blacklist of lemmas that must be ignored when extracting the frequent itemsets
  */
-class Summarizer(private val sentences: List<MorphoSynSentence>) {
+class Summarizer(private val sentences: List<MorphoSynSentence>, private val ignoreLemmas: Set<String> = setOf()) {
 
   companion object {
 
@@ -146,7 +147,7 @@ class Summarizer(private val sentences: List<MorphoSynSentence>) {
     sentence.tokens
       .asSequence()
       .mapNotNull { it.flatMorphologies.firstOrNull() }
-      .filter { it is ContentWord }
+      .filter { it is ContentWord && it.lemma !in this.ignoreLemmas }
       .map { it.lemma }
       .toList()
 
