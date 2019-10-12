@@ -60,7 +60,7 @@ object Summarizer {
     // Note: singular values in S are sorted by descending value.
     val singularValuesThreshold: Double = s[0] / 2
     var relevantSingularValues = -1
-    while (s[++relevantSingularValues] >= singularValuesThreshold);
+    while (relevantSingularValues < s.lastIndex && s[++relevantSingularValues] >= singularValuesThreshold);
 
     val rowScores: List<Double> = (0 until v.rows).map { k ->
       val sqrScore = (0 .. relevantSingularValues).sumByDouble { i -> Math.pow(v[k, i], 2.0) * Math.pow(s[i], 2.0) }
