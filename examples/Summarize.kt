@@ -175,6 +175,14 @@ private class SummaryHelper(parsedArgs: CommandLineArguments) {
   })
 
   /**
+   * A blacklist of lemmas that must be ignored when extracting the frequent itemsets.
+   */
+  private val lemmasBlacklist: Set<String> = parsedArgs.lemmasBlacklistPath?.let {
+    println("Loading lemmas blacklist for from '$it'...")
+    File(it).readLines().toSet()
+  } ?: setOf()
+
+  /**
    * Summarize a text.
    *
    * @param text a text
@@ -192,7 +200,7 @@ private class SummaryHelper(parsedArgs: CommandLineArguments) {
     timer.reset()
 
     println("Summarizing...")
-    val summary: Summary = Summarizer(parsedSentences).getSummary()
+    val summary: Summary = Summarizer(sentences = parsedSentences, ignoreLemmas = this.lemmasBlacklist).getSummary()
 
     println("Elapsed time: ${timer.formatElapsedTime()}")
 

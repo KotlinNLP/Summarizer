@@ -6,6 +6,7 @@
  * -----------------------------------------------------------------------------*/
 
 import com.xenomachina.argparser.ArgParser
+import com.xenomachina.argparser.default
 
 /**
  * The interpreter of command line arguments.
@@ -45,6 +46,15 @@ internal class CommandLineArguments(args: Array<String>) {
     "--dictionary",
     help="the file path of the serialized morphology dictionary"
   )
+
+  /**
+   * The file path of the lemmas blacklist.
+   */
+  val lemmasBlacklistPath: String? by parser.storing(
+    "-b",
+    "--blacklist",
+    help="the file path of the lemmas blacklist"
+  ).default { null }
 
   /**
    * Force parsing all arguments (only read ones are parsed by default).
