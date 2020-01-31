@@ -22,9 +22,14 @@ import com.kotlinnlp.summarizer.Summarizer
 import com.kotlinnlp.summarizer.Summary
 import com.kotlinnlp.utils.Timer
 import com.kotlinnlp.utils.progressindicator.ProgressIndicatorBar
+import com.sun.xml.internal.messaging.saaj.util.ByteInputStream
 import com.xenomachina.argparser.mainBody
+import org.apache.tika.metadata.Metadata
+import org.apache.tika.parser.AutoDetectParser
+import org.apache.tika.sax.BodyContentHandler
 import java.io.File
 import java.io.FileInputStream
+import java.io.StringWriter
 
 /**
  * Summarize the text contained in a given file.
@@ -46,7 +51,7 @@ fun main(args: Array<String>) = mainBody {
 
     } else {
 
-      val inputText: String = File(filePath).readText()
+      val inputText: String = parseDocument(File(filePath).readBytes())
       val (tkSentences, summary) = helper.summarize(inputText)
 
       printItemsets(summary)
@@ -66,15 +71,32 @@ fun main(args: Array<String>) = mainBody {
 }
 
 /**
- * Read the path of a textual file from the standard input.
+ * Read the path of a document from the standard input.
  *
  * @return the path read
  */
 private fun readPath(): String {
 
-  print("Insert the path of the file whose content will be summarized (empty to exit): ")
+  print("Insert the path of the document whose content will be summarized (empty to exit): ")
 
   return readLine()!!
+}
+
+/**
+ * Parse a document with Apache Tika.
+ *
+ * @param document a document as array of bytes
+ *
+ * @return the textual content of the given document
+ */
+private fun parseDocument(document: ByteArray): String {
+
+  val handler = BodyContentHandler(StringWriter())
+
+  @Suppress("DEPRECATION")
+  AutoDetectParser().parse(ByteInputStream(document, document.size), handler, Metadata())
+
+  return handler.toString().replace(Regex("-\n"), "")
 }
 
 /**
