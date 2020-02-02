@@ -177,18 +177,18 @@ class Summarizer(
     this.termsDictionary = DictionarySet()
     this.ngramsDictionary = DictionarySet()
 
-    return sentencesOfTerms.map { sentenceOfTerms ->
+    return sentencesOfTerms.map { terms ->
 
-      if (sentencesOfTerms.size >= this.ngramDimRange.start) {
+      if (terms.size >= this.ngramDimRange.start) {
 
-        val sentenceOfItems: MutableSet<Int> = mutableSetOf()
-        val sentenceOfInts: List<Int> = sentenceOfTerms.map { this.termsDictionary.add(it) }
+        val itemset: MutableSet<Int> = mutableSetOf()
+        val intTerms: List<Int> = terms.map { this.termsDictionary.add(it) }
 
-        sentenceOfInts.forEachGroup(min = this.ngramDimRange.start, max = this.ngramDimRange.endInclusive) { ngram ->
-          sentenceOfItems.add(this.ngramsDictionary.add(ngram))
+        intTerms.forEachGroup(min = this.ngramDimRange.start, max = this.ngramDimRange.endInclusive) { ngram ->
+          itemset.add(this.ngramsDictionary.add(ngram))
         }
 
-        sentenceOfItems.sorted().toIntArray()
+        itemset.sorted().toIntArray()
 
       } else {
         intArrayOf()
