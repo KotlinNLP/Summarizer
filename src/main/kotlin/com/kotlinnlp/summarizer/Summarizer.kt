@@ -165,7 +165,7 @@ class Summarizer(
 
   /**
    * Convert sentences of lemmas to ordered sequences of integer items.
-   * Each item refers to an ngram of consecutive lemmas, with a size between [MIN_NGRAM_SIZE] and [MAX_NGRAM_SIZE].
+   * Each item refers to an ngram of consecutive lemmas, with a size in the range [ngramDimRange].
    *
    * @param sentencesOfLemmas a list of sentences (as lists of lemmas) that compose a text
    *
