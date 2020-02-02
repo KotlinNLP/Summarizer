@@ -16,6 +16,7 @@ import com.kotlinnlp.simplednn.simplemath.ndarray.Shape
 import com.kotlinnlp.simplednn.simplemath.ndarray.dense.DenseNDArray
 import com.kotlinnlp.simplednn.simplemath.ndarray.dense.DenseNDArrayFactory
 import com.kotlinnlp.utils.DictionarySet
+import com.kotlinnlp.utils.forEachGroup
 import kotlin.math.min
 
 /**
@@ -41,12 +42,12 @@ class Summarizer(
 ) {
 
   /**
-   * The dictionary of relevant lemmas of the input text.
+   * The dictionary of relevant terms of the input text.
    */
-  private lateinit var lemmasDictionary: DictionarySet<String>
+  private lateinit var termsDictionary: DictionarySet<String>
 
   /**
-   * The dictionary of ngrams (as sequence of relevant lemmas) of the input text.
+   * The dictionary of ngrams (as sequence of relevant terms) of the input text.
    */
   private lateinit var ngramsDictionary: DictionarySet<List<Int>>
 
@@ -141,13 +142,13 @@ class Summarizer(
       .toList()
 
   /**
-   * @param sentencesOfLemmas a list of sentences (as lists of lemmas) that compose a text
+   * @param sentencesOfTerms a list of sentences (as lists of terms) that compose a text
    *
    * @return the matrix that represents the relation between sentences and frequent itemsets
    */
-  private fun buildItemsetsMatrix(sentencesOfLemmas: List<List<String>>): DenseNDArray {
+  private fun buildItemsetsMatrix(sentencesOfTerms: List<List<String>>): DenseNDArray {
 
-    val sentencesOfInt: List<IntArray> = this.sentencesToItems(sentencesOfLemmas)
+    val sentencesOfInt: List<IntArray> = this.sentencesToItems(sentencesOfTerms)
 
     val dataset = Dataset(sentencesOfInt.filter { it.isNotEmpty() })
     this.frequentItemsets = AlgoLCM().runAlgorithm(this.minLCMSupport, dataset, null).levels.flatten()
@@ -164,39 +165,34 @@ class Summarizer(
   }
 
   /**
-   * Convert sentences of lemmas to ordered sequences of integer items.
-   * Each item refers to an ngram of consecutive lemmas, with a size in the range [ngramDimRange].
+   * Convert sentences of terms to ordered sequences of integer items.
+   * Each item refers to an ngram of consecutive terms, with a size in the range [ngramDimRange].
    *
-   * @param sentencesOfLemmas a list of sentences (as lists of lemmas) that compose a text
+   * @param sentencesOfTerms a list of sentences (as lists of terms) that compose a text
    *
    * @return the sentences converted to ordered sequences of integer items
    */
-  private fun sentencesToItems(sentencesOfLemmas: List<List<String>>): List<IntArray> {
+  private fun sentencesToItems(sentencesOfTerms: List<List<String>>): List<IntArray> {
 
-    this.lemmasDictionary = DictionarySet()
+    this.termsDictionary = DictionarySet()
     this.ngramsDictionary = DictionarySet()
 
-    return sentencesOfLemmas.map { sentence ->
+    return sentencesOfTerms.map { sentenceOfTerms ->
 
-      val intSentence: List<Int> = sentence.map { lemma ->
-        lemmasDictionary.add(lemma)
-        lemmasDictionary.getId(lemma)!!
-      }
-      val sentenceItems: MutableSet<Int> = mutableSetOf()
+      if (sentencesOfTerms.size >= this.ngramDimRange.start) {
 
-      this.ngramDimRange.forEach { ngramSize ->
+        val sentenceOfItems: MutableSet<Int> = mutableSetOf()
+        val sentenceOfInts: List<Int> = sentenceOfTerms.map { this.termsDictionary.add(it) }
 
-        val startIter: Int = min(ngramSize, sentence.size)
-
-        (startIter until sentence.size).forEach { endExclusive ->
-          val start: Int = endExclusive - ngramSize
-          val ngram: List<Int> = intSentence.subList(start, endExclusive)
-          ngramsDictionary.add(ngram)
-          sentenceItems.add(ngramsDictionary.getId(ngram)!!)
+        sentenceOfInts.forEachGroup(min = this.ngramDimRange.start, max = this.ngramDimRange.endInclusive) { ngram ->
+          sentenceOfItems.add(this.ngramsDictionary.add(ngram))
         }
-      }
 
-      sentenceItems.sorted().toIntArray()
+        sentenceOfItems.sorted().toIntArray()
+
+      } else {
+        intArrayOf()
+      }
     }
   }
 
@@ -222,8 +218,8 @@ class Summarizer(
   private fun Itemset.toText(): String = this.items.joinToString(", ") { item ->
 
     val ngram: List<Int> = this@Summarizer.ngramsDictionary.getElement(item)!!
-    val lemmas: List<String> = ngram.map { this@Summarizer.lemmasDictionary.getElement(it)!! }
+    val terms: List<String> = ngram.map { this@Summarizer.termsDictionary.getElement(it)!! }
 
-    lemmas.joinToString(" ")
+    terms.joinToString(" ")
   }
 }
