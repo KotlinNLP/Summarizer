@@ -29,27 +29,16 @@ import kotlin.math.min
  *
  * @param sentences a list of sentences that compose a text
  * @param ignoreLemmas a blacklist of lemmas that must be ignored when extracting the frequent itemsets
+ * @param minLCMSupport the parameter given to the LCM as minimum support value (in percentage respect to the number of
+ *                      frequent itemsets collected in the whole text).
+ * @param ngramDimRange the range of possible dimensions (number of terms) of an ngram
  */
-class Summarizer(private val sentences: List<MorphoSynSentence>, private val ignoreLemmas: Set<String> = setOf()) {
-
-  companion object {
-
-    /**
-     * The parameter given to the LCM as minimum support value (in percentage respect to the number of frequent itemsets
-     * collected in the whole text).
-     */
-    private const val MIN_LCM_SUPPORT = 0.01
-
-    /**
-     * The minimum number of lemmas that compose an ngram.
-     */
-    private const val MIN_NGRAM_SIZE = 2
-
-    /**
-     * The maximum number of lemmas that compose an ngram.
-     */
-    private const val MAX_NGRAM_SIZE = 4
-  }
+class Summarizer(
+  private val sentences: List<MorphoSynSentence>,
+  private val ignoreLemmas: Set<String> = setOf(),
+  private val minLCMSupport: Double = 0.01,
+  private val ngramDimRange: IntRange = 2 .. 4
+) {
 
   /**
    * The dictionary of relevant lemmas of the input text.
@@ -161,7 +150,7 @@ class Summarizer(private val sentences: List<MorphoSynSentence>, private val ign
     val sentencesOfInt: List<IntArray> = this.sentencesToItems(sentencesOfLemmas)
 
     val dataset = Dataset(sentencesOfInt.filter { it.isNotEmpty() })
-    this.frequentItemsets = AlgoLCM().runAlgorithm(MIN_LCM_SUPPORT, dataset, null).levels.flatten()
+    this.frequentItemsets = AlgoLCM().runAlgorithm(this.minLCMSupport, dataset, null).levels.flatten()
 
     val itemsetsMatrix = DenseNDArrayFactory.zeros(Shape(this.frequentItemsets.size, sentencesOfInt.size))
 
@@ -195,7 +184,7 @@ class Summarizer(private val sentences: List<MorphoSynSentence>, private val ign
       }
       val sentenceItems: MutableSet<Int> = mutableSetOf()
 
-      (MIN_NGRAM_SIZE .. MAX_NGRAM_SIZE).forEach { ngramSize ->
+      this.ngramDimRange.forEach { ngramSize ->
 
         val startIter: Int = min(ngramSize, sentence.size)
 
