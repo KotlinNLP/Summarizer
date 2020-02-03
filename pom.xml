@@ -60,7 +60,6 @@
         <dokka.version>0.9.16</dokka.version>
         <linguisticdescription.version>0.12.2</linguisticdescription.version>
         <simplednn.version>0.13.3</simplednn.version>
-        <utils.version>2.1.4</utils.version>
     </properties>
 
     <repositories>
@@ -249,12 +248,6 @@
             <groupId>com.kotlinnlp</groupId>
             <artifactId>simplednn</artifactId>
             <version>${simplednn.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.kotlinnlp</groupId>
-            <artifactId>utils</artifactId>
-            <version>${utils.version}</version>
         </dependency>
     </dependencies>
 </project>
