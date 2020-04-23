@@ -18,6 +18,7 @@ import com.kotlinnlp.simplednn.simplemath.ndarray.dense.DenseNDArrayFactory
 import com.kotlinnlp.utils.DictionarySet
 import com.kotlinnlp.utils.forEachGroup
 import kotlin.math.min
+import kotlin.math.sqrt
 
 /**
  * Calculate the salience scores and the relevant itemsets of the sentences that compose a text, with the purpose to
@@ -104,7 +105,7 @@ class Summarizer(
         mKI * mKI * sI * sI
       }
 
-      Math.sqrt(sqrScore)
+      sqrt(sqrScore)
     }
 
     val maxRowScore: Double = rowScores.max()!!
@@ -123,6 +124,7 @@ class Summarizer(
     var relevantSingularValues = -1
 
     // Note: singular values in S are sorted by descending value.
+    @Suppress("ControlFlowWithEmptyBody")
     while (relevantSingularValues < s.lastIndex && s[++relevantSingularValues] >= singularValuesThreshold);
 
     return relevantSingularValues
@@ -179,12 +181,12 @@ class Summarizer(
 
     return sentencesOfTerms.map { terms ->
 
-      if (terms.size >= this.ngramDimRange.start) {
+      if (terms.size >= this.ngramDimRange.first) {
 
         val itemset: MutableSet<Int> = mutableSetOf()
         val intTerms: List<Int> = terms.map { this.termsDictionary.add(it) }
 
-        intTerms.forEachGroup(min = this.ngramDimRange.start, max = this.ngramDimRange.endInclusive) { ngram ->
+        intTerms.forEachGroup(min = this.ngramDimRange.first, max = this.ngramDimRange.last) { ngram ->
           itemset.add(this.ngramsDictionary.add(ngram))
         }
 
