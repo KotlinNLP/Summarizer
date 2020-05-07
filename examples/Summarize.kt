@@ -102,9 +102,11 @@ private fun readSummaryStrength(): Double? {
  */
 private fun printItemsets(summary: Summary) {
 
+  val sortedItemsets: Sequence<Summary.Itemset> = summary.relevantItemsets.asSequence().sortedByDescending { it.score }
+
   println()
   println("Relevant itemsets:")
-  println(summary.relevantItemsets.joinToString("\n") { "[%.1f] ${it.text}".format(100.0 * it.score) })
+  println(sortedItemsets.joinToString("\n") { "[%5.1f %%] ${it.text}".format(100.0 * it.score) })
 }
 
 /**
